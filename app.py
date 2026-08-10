@@ -1,25 +1,25 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Streamlit Sayfa Düzeni (Mobilde daha iyi görünüm için wide/centered dengesi)
+# Streamlit Sayfa Yapılandırması
 st.set_page_config(
-    page_title="Minion 3D Runner",
+    page_title="Minion 3D Runner - Word Collector",
     page_icon="🍌",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion 3D Runner")
-st.caption("Kafanızı sağa/sola eğerek Minyonu yönlendirin.")
+st.title("🍌 Minion 3D Runner: Kelime Avcısı")
+st.caption("Kafanızı sağa/sola eğip merkeze getirerek doğru harfleri toplayın, 500m bonuslarını kapın ve mağazadan kostümleri açın!")
 
-# Mobil Uyumlu HTML / CSS / JS Oyun Kodu
+# HTML / CSS / JS Oyun Kodu
 game_html = """
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minion 3D Runner - Mobile Ready</title>
+  <title>Minion Runner - Optimized Streamlit Edition</title>
 
   <!-- TensorFlow.js ve BlazeFace Kütüphaneleri -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
@@ -28,7 +28,7 @@ game_html = """
   <style>
     * {
       box-sizing: border-box;
-      touch-action: none; /* Mobilde oynarken sayfanın aşağı/yukarı kaymasını engeller */
+      touch-action: none;
     }
     body {
       margin: 0;
@@ -45,14 +45,13 @@ game_html = """
     }
     #status {
       font-size: 14px;
-      margin: 8px 0;
+      margin: 6px 0;
       color: #ffcc00;
       font-weight: bold;
       text-shadow: 0 0 10px rgba(255,204,0,0.3);
       width: 90%;
       text-align: center;
     }
-    /* Mobil Responsive Container */
     #game-container {
       position: relative;
       width: 95vw;
@@ -73,42 +72,195 @@ game_html = """
     #webcam {
       position: absolute;
       top: 10px;
-      right: 10px;
-      width: 75px;
-      height: 56px;
+      left: 10px;
+      width: 70px;
+      height: 52px;
       border: 2px solid #ffcc00;
       border-radius: 6px;
       transform: scaleX(-1);
       z-index: 10;
       object-fit: cover;
     }
-    #ui-layer {
+    #distance-ui {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      font-size: 18px;
+      top: 10px;
+      left: 90px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #38bdf8;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #38bdf8;
+      z-index: 10;
+    }
+    #wallet-ui {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(30, 58, 138, 0.85);
+      border: 2px solid #ffcc00;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 15px;
       font-weight: bold;
       color: #ffcc00;
-      text-shadow: 2px 2px 4px #000;
-      pointer-events: none;
-      z-index: 5;
+      box-shadow: 0 0 10px rgba(255,204,0,0.4);
+      z-index: 10;
     }
-    #restart-btn {
+    #word-ui {
       position: absolute;
-      top: 65%;
+      top: 48px;
       left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 12px 24px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      z-index: 10;
+      max-width: 380px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .char-box {
+      width: 28px;
+      height: 34px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid #475569;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 16px;
       font-weight: bold;
-      color: #000;
-      background-color: #ffcc00;
+      color: #94a3b8;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    .char-box.collected {
+      background: #ffcc00;
+      border-color: #ffffff;
+      color: #000000;
+      box-shadow: 0 0 10px #ffcc00;
+      transform: scale(1.1);
+    }
+    
+    .game-btn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
       border: none;
       border-radius: 25px;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(255,204,0,0.6);
       display: none;
       z-index: 20;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 15px rgba(255,204,0,0.5);
+    }
+    #restart-btn {
+      top: 58%;
+      color: #000;
+      background-color: #ffcc00;
+    }
+    #shop-btn {
+      top: 70%;
+      color: #fff;
+      background-color: #2563eb;
+      border: 2px solid #3b82f6;
+    }
+
+    #shop-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 20, 29, 0.95);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    #shop-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+    }
+    #back-btn {
+      background: #334155;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #shop-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffcc00;
+    }
+    .shop-items-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .shop-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1e293b;
+      border: 2px solid #334155;
+      padding: 10px 15px;
+      border-radius: 12px;
+    }
+    .shop-item-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .shop-item-icon {
+      font-size: 30px;
+    }
+    .shop-item-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .shop-item-name {
+      font-weight: bold;
+      font-size: 14px;
+      color: #fff;
+    }
+    .shop-item-price {
+      font-size: 12px;
+      color: #ffcc00;
+    }
+    .buy-btn {
+      padding: 8px 14px;
+      border-radius: 15px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      background: #10b981;
+      color: #fff;
+      font-size: 13px;
+    }
+    .buy-btn.selected {
+      background: #64748b;
+      cursor: default;
+    }
+    .buy-btn.disabled {
+      background: #475569;
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   </style>
 </head>
@@ -118,8 +270,25 @@ game_html = """
   
   <div id="game-container">
     <video id="webcam" autoplay playsinline muted></video>
-    <div id="ui-layer">SKOR: <span id="score">0</span></div>
-    <button id="restart-btn" onclick="resetGame()">YENİDEN BAŞLAT</button>
+    
+    <div id="distance-ui">🏃 <span id="distance">0</span> m</div>
+    <div id="wallet-ui">🍌 <span id="coins">0</span></div>
+    
+    <div id="word-ui"></div>
+
+    <button id="restart-btn" class="game-btn" onclick="resetGame()">YENİDEN BAŞLAT</button>
+    <button id="shop-btn" class="game-btn" onclick="openShop()">🛒 MARKET</button>
+
+    <div id="shop-modal">
+      <div id="shop-header">
+        <button id="back-btn" onclick="closeShop()">← GERİ</button>
+        <div id="shop-title">MINYON MARKETİ</div>
+        <div style="font-size:14px; color:#ffcc00;">🍌 <span id="shop-coins">0</span></div>
+      </div>
+
+      <div class="shop-items-container" id="shop-items"></div>
+    </div>
+
     <canvas id="gameCanvas" width="400" height="600"></canvas>
   </div>
 
@@ -128,11 +297,19 @@ game_html = """
     const statusText = document.getElementById('status');
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const scoreElement = document.getElementById('score');
+    const coinsElement = document.getElementById('coins');
+    const distanceElement = document.getElementById('distance');
+    const shopCoinsElement = document.getElementById('shop-coins');
+    const wordUi = document.getElementById('word-ui');
     const restartBtn = document.getElementById('restart-btn');
+    const shopBtn = document.getElementById('shop-btn');
+    const shopModal = document.getElementById('shop-modal');
+    const shopItemsContainer = document.getElementById('shop-items');
 
     let model;
-    let score = 0;
+    let coins = 0;
+    let distance = 0;
+    let nextDistanceMilestone = 500;
     let gameOver = false;
     let animationFrameId;
     
@@ -144,10 +321,29 @@ game_html = """
     let playerY = 500;
 
     let moveState = 'neutral'; 
-
+    const FIXED_SPEED = 0.012; 
+    
     let obstacles = [];
-    const FIXED_OBSTACLE_SPEED = 0.012; 
+    let letters = [];
+    let sparkles = []; 
     let spawnTimer = 0;
+
+    const wordList = [
+      "BANANA", "BELLO", "GELATO", "PAPOY", "POOPA", 
+      "KANPAI", "BEEDO", "TANKYU", "TULALILOO", "UNDERWEAR"
+    ];
+    let wordIndex = 0;
+    let currentWord = wordList[wordIndex];
+    let collectedCount = 0;
+    let floatingMessage = null;
+
+    let activeSkin = 'classic';
+    const skins = [
+      { id: 'classic', name: 'Klasik Minyon', price: 0, icon: '🍌', purchased: true },
+      { id: 'agent', name: 'Ajan Minyon', price: 50, icon: '🕶️', purchased: false },
+      { id: 'king', name: 'Kral Minyon', price: 100, icon: '👑', purchased: false },
+      { id: 'firefighter', name: 'İtfaiyeci Minyon', price: 150, icon: '👨‍🚒', purchased: false }
+    ];
 
     const obstacleTypes = [
       { emoji: '🚆', sizeOffset: 1.2 },
@@ -158,6 +354,81 @@ game_html = """
 
     let sideDecorations = [];
     let decorTimer = 0;
+
+    function renderWordUI() {
+      wordUi.innerHTML = '';
+      for (let i = 0; i < currentWord.length; i++) {
+        const box = document.createElement('div');
+        box.className = 'char-box' + (i < collectedCount ? ' collected' : '');
+        box.innerText = currentWord[i];
+        wordUi.appendChild(box);
+      }
+    }
+
+    function renderShopUI() {
+      shopCoinsElement.innerText = coins;
+      shopItemsContainer.innerHTML = '';
+
+      skins.forEach(skin => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item';
+
+        let btnText = '';
+        let btnClass = 'buy-btn';
+        let onClickAction = '';
+
+        if (activeSkin === skin.id) {
+          btnText = 'SEÇİLDİ';
+          btnClass += ' selected';
+        } else if (skin.purchased) {
+          btnText = 'SEÇ';
+          onClickAction = `selectSkin('${skin.id}')`;
+        } else if (coins >= skin.price) {
+          btnText = `${skin.price} 🍌 SATIN AL`;
+          onClickAction = `buySkin('${skin.id}')`;
+        } else {
+          btnText = `${skin.price} 🍌 Yetersiz`;
+          btnClass += ' disabled';
+        }
+
+        itemDiv.innerHTML = `
+          <div class="shop-item-info">
+            <div class="shop-item-icon">${skin.icon}</div>
+            <div class="shop-item-details">
+              <div class="shop-item-name">${skin.name}</div>
+              <div class="shop-item-price">${skin.price === 0 ? 'Ücretsiz' : skin.price + ' Banana'}</div>
+            </div>
+          </div>
+          <button class="${btnClass}" ${onClickAction ? `onclick="${onClickAction}"` : ''}>${btnText}</button>
+        `;
+        shopItemsContainer.appendChild(itemDiv);
+      });
+    }
+
+    function openShop() {
+      renderShopUI();
+      shopModal.style.display = 'flex';
+    }
+
+    function closeShop() {
+      shopModal.style.display = 'none';
+    }
+
+    function buySkin(skinId) {
+      const skin = skins.find(s => s.id === skinId);
+      if (skin && !skin.purchased && coins >= skin.price) {
+        coins -= skin.price;
+        skin.purchased = true;
+        activeSkin = skinId;
+        coinsElement.innerText = coins;
+        renderShopUI();
+      }
+    }
+
+    function selectSkin(skinId) {
+      activeSkin = skinId;
+      renderShopUI();
+    }
 
     async function setupCamera() {
       try {
@@ -260,7 +531,7 @@ game_html = """
 
     function updateAndDrawDecorations() {
       decorTimer++;
-      if (decorTimer > 35) {
+      if (decorTimer > 25) {
         sideDecorations.push({ side: 'left', z: 0, type: Math.random() > 0.5 ? '🌳' : '💡' });
         sideDecorations.push({ side: 'right', z: 0, type: Math.random() > 0.5 ? '🌳' : '💡' });
         decorTimer = 0;
@@ -268,7 +539,7 @@ game_html = """
 
       for (let i = 0; i < sideDecorations.length; i++) {
         let dec = sideDecorations[i];
-        dec.z += FIXED_OBSTACLE_SPEED;
+        dec.z += FIXED_SPEED;
 
         const horizonY = 180;
         const currentY = lerp(horizonY, 600, dec.z);
@@ -301,16 +572,35 @@ game_html = """
       ctx.arc(0, 15, 20, 0, Math.PI, false);  
       ctx.fill();
 
-      ctx.fillStyle = '#2563eb';
-      ctx.fillRect(-20, 5, 40, 20);
-      ctx.fillRect(-12, -2, 24, 10); 
+      if (activeSkin === 'agent') {
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(-20, 5, 40, 20);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-6, 5, 12, 10); 
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(-2, 7, 4, 12);  
+      } else if (activeSkin === 'king') {
+        ctx.fillStyle = '#dc2626'; 
+        ctx.fillRect(-24, 0, 48, 25);
+        ctx.fillStyle = '#2563eb'; 
+        ctx.fillRect(-20, 5, 40, 20);
+      } else if (activeSkin === 'firefighter') {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-20, 5, 40, 20);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(-20, 12, 40, 4); 
+      } else {
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(-20, 5, 40, 20);
+        ctx.fillRect(-12, -2, 24, 10); 
 
-      ctx.strokeStyle = '#1d4ed8';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(-18, -2); ctx.lineTo(-10, 8);
-      ctx.moveTo(18, -2); ctx.lineTo(10, 8);
-      ctx.stroke();
+        ctx.strokeStyle = '#1d4ed8';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-18, -2); ctx.lineTo(-10, 8);
+        ctx.moveTo(18, -2); ctx.lineTo(10, 8);
+        ctx.stroke();
+      }
 
       ctx.fillStyle = '#111';
       ctx.fillRect(-20, -18, 40, 6);
@@ -325,10 +615,25 @@ game_html = """
       ctx.arc(0, -15, 7, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#374151'; 
+      ctx.fillStyle = activeSkin === 'agent' ? '#000' : '#374151'; 
       ctx.beginPath();
-      ctx.arc(0, -15, 3, 0, Math.PI * 2);
+      ctx.arc(0, -15, activeSkin === 'agent' ? 6 : 3, 0, Math.PI * 2);
       ctx.fill();
+
+      if (activeSkin === 'king') {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(-12, -35); ctx.lineTo(-15, -45); ctx.lineTo(-6, -38);
+        ctx.lineTo(0, -48); ctx.lineTo(6, -38); ctx.lineTo(15, -45); ctx.lineTo(12, -35);
+        ctx.closePath();
+        ctx.fill();
+      } else if (activeSkin === 'firefighter') {
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(0, -32, 22, Math.PI, 0, false);
+        ctx.fill();
+        ctx.fillRect(-24, -34, 48, 5); 
+      }
 
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
@@ -339,17 +644,74 @@ game_html = """
       ctx.restore();
     }
 
+    function createSparkles() {
+      for (let i = 0; i < 10; i++) {
+        sparkles.push({
+          x: playerX,
+          y: playerY - 30,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6 - 2,
+          size: Math.random() * 5 + 2,
+          color: Math.random() > 0.5 ? '#ffcc00' : '#ffffff',
+          alpha: 1.0
+        });
+      }
+    }
+
+    function triggerWordCompletedEffect() {
+      coins += 10;
+      coinsElement.innerText = coins;
+
+      floatingMessage = {
+        text: '🍌 +10 BANANA!',
+        x: playerX,
+        y: playerY - 30,
+        alpha: 1.0,
+        scale: 1.0
+      };
+
+      createSparkles();
+
+      wordIndex = (wordIndex + 1) % wordList.length;
+      currentWord = wordList[wordIndex];
+      collectedCount = 0;
+      renderWordUI();
+    }
+
+    function triggerDistanceBonusEffect() {
+      coins += 10;
+      coinsElement.innerText = coins;
+
+      floatingMessage = {
+        text: `🏃 ${nextDistanceMilestone}m BONUS! +10 BANANA`,
+        x: playerX,
+        y: playerY - 30,
+        alpha: 1.0,
+        scale: 0.9
+      };
+
+      createSparkles();
+      nextDistanceMilestone += 500;
+    }
+
     function updateGame() {
       if (gameOver) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      distance += 0.4;
+      distanceElement.innerText = Math.floor(distance);
+
+      if (Math.floor(distance) >= nextDistanceMilestone) {
+        triggerDistanceBonusEffect();
+      }
 
       drawBackground();
       draw3DRoad();
       updateAndDrawDecorations();
 
       const targetX = baseLanes[playerLane];
-      playerX += (targetX - playerX) * 0.2; 
+      playerX += (targetX - playerX) * 0.25; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -359,21 +721,74 @@ game_html = """
       drawVectorMinion(playerX, playerY);
 
       spawnTimer++;
-      if (spawnTimer > 70) { 
+      if (spawnTimer > 45) { 
         const randomLane = Math.floor(Math.random() * 3);
-        const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         
-        obstacles.push({
-          lane: randomLane,
-          z: 0,
-          type: randomType
-        });
+        if (Math.random() < 0.5 && collectedCount < currentWord.length) {
+          const isCorrect = Math.random() < 0.7;
+          const charToSpawn = isCorrect 
+            ? currentWord[collectedCount] 
+            : String.fromCharCode(65 + Math.floor(Math.random() * 26));
+
+          letters.push({
+            char: charToSpawn,
+            lane: randomLane,
+            z: 0
+          });
+        } else {
+          const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+          obstacles.push({
+            lane: randomLane,
+            z: 0,
+            type: randomType
+          });
+        }
         spawnTimer = 0;
+      }
+
+      for (let i = 0; i < letters.length; i++) {
+        let letObj = letters[i];
+        letObj.z += FIXED_SPEED;
+
+        const horizonY = 180;
+        const currentY = lerp(horizonY, 520, letObj.z);
+        const currentX = lerp(topLanes[letObj.lane], baseLanes[letObj.lane], letObj.z);
+        const currentScale = lerp(0.2, 1.0, letObj.z);
+
+        ctx.fillStyle = 'rgba(255, 204, 0, 0.9)';
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, 20 * currentScale, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000000';
+        ctx.font = `bold ${22 * currentScale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letObj.char, currentX, currentY);
+
+        if (letObj.z >= 0.88 && letObj.z <= 1.02 && playerLane === letObj.lane) {
+          if (letObj.char === currentWord[collectedCount]) {
+            collectedCount++;
+            renderWordUI();
+
+            if (collectedCount === currentWord.length) {
+              triggerWordCompletedEffect();
+            }
+          }
+          letters.splice(i, 1);
+          i--;
+          continue;
+        }
+
+        if (letObj.z > 1.1) {
+          letters.splice(i, 1);
+          i--;
+        }
       }
 
       for (let i = 0; i < obstacles.length; i++) {
         let obs = obstacles[i];
-        obs.z += FIXED_OBSTACLE_SPEED;
+        obs.z += FIXED_SPEED;
 
         const horizonY = 180;
         const currentY = lerp(horizonY, 520, obs.z);
@@ -399,10 +814,48 @@ game_html = """
         if (obs.z > 1.1) {
           obstacles.splice(i, 1);
           i--;
-          score += 10;
-          scoreElement.innerText = score;
         }
       }
+
+      if (floatingMessage) {
+        ctx.save();
+        ctx.globalAlpha = floatingMessage.alpha;
+        ctx.font = `bold ${28 * floatingMessage.scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffcc00';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeText(floatingMessage.text, floatingMessage.x, floatingMessage.y);
+        ctx.fillText(floatingMessage.text, floatingMessage.x, floatingMessage.y);
+        ctx.restore();
+
+        floatingMessage.y -= 3.5; 
+        floatingMessage.alpha -= 0.025; 
+        floatingMessage.scale += 0.005; 
+
+        if (floatingMessage.alpha <= 0) {
+          floatingMessage = null;
+        }
+      }
+
+      for (let i = 0; i < sparkles.length; i++) {
+        let sp = sparkles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.alpha -= 0.03;
+
+        ctx.fillStyle = sp.color;
+        ctx.globalAlpha = Math.max(0, sp.alpha);
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (sp.alpha <= 0) {
+          sparkles.splice(i, 1);
+          i--;
+        }
+      }
+      ctx.globalAlpha = 1.0;
 
       animationFrameId = requestAnimationFrame(updateGame);
     }
@@ -417,33 +870,53 @@ game_html = """
       ctx.fillStyle = '#ff0055';
       ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER', 200, 260);
+      ctx.fillText('GAME OVER', 200, 220);
       
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '18px sans-serif';
+      ctx.fillText('Mesafe: ' + Math.floor(distance) + ' m', 200, 270);
+
       ctx.fillStyle = '#ffcc00';
       ctx.font = '18px sans-serif';
-      ctx.fillText('Toplanan Skor: ' + score, 200, 310);
+      ctx.fillText('Muz Bakiyesi: ' + coins + ' 🍌', 200, 310);
 
       restartBtn.style.display = 'block';
+      shopBtn.style.display = 'block';
     }
 
     function resetGame() {
-      score = 0;
-      scoreElement.innerText = score;
       playerLane = 1;
       playerX = baseLanes[1];
       obstacles = [];
+      letters = [];
       sideDecorations = [];
+      sparkles = [];
       spawnTimer = 0;
       decorTimer = 0;
+      collectedCount = 0;
+      distance = 0;
+      nextDistanceMilestone = 500;
+      distanceElement.innerText = '0';
+      floatingMessage = null;
       gameOver = false;
       moveState = 'neutral';
 
+      renderWordUI();
       restartBtn.style.display = 'none';
+      shopBtn.style.display = 'none';
+      closeShop();
       updateGame();
     }
 
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && gameOver && shopModal.style.display !== 'flex') {
+        resetGame();
+      }
+    });
+
     async function main() {
       try {
+        renderWordUI();
         statusText.innerText = "Kamera İzni İsteniyor...";
         await setupCamera();
         
@@ -455,7 +928,7 @@ game_html = """
 
         model = await blazeface.load();
         
-        statusText.innerText = "Oyun Hazır! Kafanı Eğerek Yönlendir.";
+        statusText.innerText = "Bello! Doğru Harfleri Topla.";
         
         detectFace();
         updateGame();
@@ -472,4 +945,5 @@ game_html = """
 </html>
 """
 
+# Streamlit HTML Bileşenini Yükleme
 components.html(game_html, height=680)
