@@ -8,8 +8,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion 3D Runner: Ultra Seri Kontrol")
-st.caption("Kafa hareket algılama hızı ve hassasiyeti maksimuma çıkarıldı!")
+st.title("🍌 Minion Runner")
+
 
 game_html = """
 <!DOCTYPE html>
