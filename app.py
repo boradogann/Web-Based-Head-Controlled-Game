@@ -2,14 +2,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Minion 3D Runner - Ultra Fast",
+    page_title="Minion 3D Runner - Mobile Stabilized",
     page_icon="🍌",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion Runner")
-
+st.title("🍌 Minion 3D Runner: Mobil Stabilize Sürüm")
+st.caption("Telefon elde tutulurken oluşan el titremelerini süzebilen özel açı takibi altyapısı eklendi!")
 
 game_html = """
 <!DOCTYPE html>
@@ -17,7 +17,7 @@ game_html = """
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minion Runner - Fast Detection</title>
+  <title>Minion Runner - Mobile Stabilized</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
@@ -136,7 +136,10 @@ game_html = """
     let nextDistanceMilestone = 500;
     let gameOver = false;
     let animationFrameId;
-    let isDetecting = false; // Asenkron kilit engelleme
+    let isDetecting = false;
+    
+    let smoothedAngle = 0;
+    const SMOOTH_FACTOR = 0.3;
     
     const baseLanes = [80, 200, 320];   
     const topLanes = [170, 200, 230];   
@@ -249,7 +252,6 @@ game_html = """
       renderShopUI();
     }
 
-    // 1. KAMERA DÜŞÜK ÇÖZÜNÜRLÜKLE BAŞLATILIR (Hızlı İşleme İçin 160x120)
     async function setupCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -264,11 +266,10 @@ game_html = """
           };
         });
       } catch (err) {
-        throw new Error("Kamera erişimi başarısız!");
+        throw new Error("Kamera erişimi başarısız! İzin verdiğinizden emin olun.");
       }
     }
 
-    // 2. ULTRA HIZLI VE KİLİTSİZ YÜZ ALGILAMA DÖNGÜSÜ
     async function runDetectionLoop() {
       if (!gameOver && model && !isDetecting) {
         isDetecting = true;
@@ -277,33 +278,37 @@ game_html = """
 
           if (predictions.length > 0) {
             const face = predictions[0];
-            const noseX = face.landmarks[2][0]; // Burun X koordinatı
+            const rightEye = face.landmarks[0]; 
+            const leftEye = face.landmarks[1];  
 
-            // Hassel Eşikleri Daraltıldı (Daha hassas ve tepkisel)
-            // Kamera 160px genişliğinde olduğu için merkez: 80px civarıdır
+            const dy = leftEye[1] - rightEye[1];
+            const dx = leftEye[0] - rightEye[0];
+            const rawAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            smoothedAngle = smoothedAngle + (rawAngle - smoothedAngle) * SMOOTH_FACTOR;
+
             if (moveState === 'neutral') {
-              if (noseX > 90) { 
-                if (playerLane > 0) playerLane--;
-                moveState = 'moved'; 
-              } else if (noseX < 65) { 
+              if (smoothedAngle < -11) { 
                 if (playerLane < 2) playerLane++;
+                moveState = 'moved'; 
+              } else if (smoothedAngle > 11) { 
+                if (playerLane > 0) playerLane--;
                 moveState = 'moved'; 
               }
             } else if (moveState === 'moved') {
-              if (noseX >= 65 && noseX <= 90) {
+              if (Math.abs(smoothedAngle) <= 6) {
                 moveState = 'neutral'; 
               }
             }
           }
         } catch (e) {
-          console.error("Hızlı Yüz Tespiti Hatası:", e);
+          console.error("Yüz Tespiti Hatası:", e);
         }
         isDetecting = false;
       }
       
-      // Saniyede ~60 kez yerine hemen sonraki mikro kareye geç
       if (!gameOver) {
-        setTimeout(runDetectionLoop, 15); // ~60 FPS AI Çıkarım Döngüsü
+        setTimeout(runDetectionLoop, 15);
       }
     }
 
@@ -539,9 +544,8 @@ game_html = """
       draw3DRoad();
       updateAndDrawDecorations();
 
-      // 3. ŞERİT KAYMA HIZI HIZLANDIRILDI (0.25 -> 0.45)
       const targetX = baseLanes[playerLane];
-      playerX += (targetX - playerX) * 0.45; 
+      playerX += (targetX - playerX) * 0.35; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -730,6 +734,7 @@ game_html = """
       floatingMessage = null;
       gameOver = false;
       moveState = 'neutral';
+      smoothedAngle = 0;
 
       renderWordUI();
       restartBtn.style.display = 'none';
@@ -760,9 +765,9 @@ game_html = """
 
         model = await blazeface.load();
         
-        statusText.innerText = "Bello! Doğru Harfleri Topla.";
+        statusText.innerText = "Bello! Kafanı Sağa/Sola Eğerek Yönlendir.";
         
-        runDetectionLoop(); // Bağımsız hızlı döngü başlatılır
+        runDetectionLoop();
         updateGame();
       } catch (e) {
         statusText.style.color = "#ff0055";
