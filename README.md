@@ -31,9 +31,5 @@ Görüntü işleme ve yapay zeka modelleri **doğrudan istemci tarafında (taray
 
 ## 🚀 Yerel Bilgisayarda Çalıştırma (Local Setup)
 
-Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları takip edebilirsiniz:
+https://web-based-head-controlled-game.streamlit.app/ (Linke giriş yaparak deneyimleyebilirsiniz)
 
-1. **Depoyu klonlayın:**
-   ```bash
-   git clone [https://github.com/KULLANICI_ADI/minion-runner.git](https://github.com/KULLANICI_ADI/minion-runner.git)
-   cd minion-runner
