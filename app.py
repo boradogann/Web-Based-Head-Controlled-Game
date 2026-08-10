@@ -1,82 +1,92 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Streamlit Sayfa Düzeni
+# Streamlit Sayfa Düzeni (Mobilde daha iyi görünüm için wide/centered dengesi)
 st.set_page_config(
     page_title="Minion 3D Runner",
     page_icon="🍌",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion 3D Runner (TensorFlow.js)")
-st.markdown("""
-Kafanızı **sola veya sağa eğip merkeze getirerek** Minyonu yönlendirin.
-* **Sağa/Sola Kaçış:** Kafanızı sağa/sola eğip merkeze getirin.
-* **Yeniden Başlat:** Oyun bitince ekrandaki butona veya klavyeden `Space` tuşuna basın.
-""")
+st.title("🍌 Minion 3D Runner")
+st.caption("Kafanızı sağa/sola eğerek Minyonu yönlendirin.")
 
-# HTML / JS Oyun Kodu
+# Mobil Uyumlu HTML / CSS / JS Oyun Kodu
 game_html = """
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Minion 3D Runner - Final Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minion 3D Runner - Mobile Ready</title>
 
   <!-- TensorFlow.js ve BlazeFace Kütüphaneleri -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+      touch-action: none; /* Mobilde oynarken sayfanın aşağı/yukarı kaymasını engeller */
+    }
     body {
       margin: 0;
+      padding: 0;
       background: #0f141d;
       color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       overflow: hidden;
+      width: 100vw;
     }
     #status {
-      font-size: 15px;
-      margin-bottom: 10px;
+      font-size: 14px;
+      margin: 8px 0;
       color: #ffcc00;
       font-weight: bold;
       text-shadow: 0 0 10px rgba(255,204,0,0.3);
-      max-width: 400px;
+      width: 90%;
       text-align: center;
     }
+    /* Mobil Responsive Container */
     #game-container {
       position: relative;
-      width: 400px;
-      height: 600px;
+      width: 95vw;
+      max-width: 400px;
+      height: 75vh;
+      max-height: 600px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
       border-radius: 16px;
       overflow: hidden;
       border: 2px solid #ffcc00;
     }
     canvas {
+      width: 100%;
+      height: 100%;
       background: linear-gradient(to bottom, #0f172a 0%, #1e293b 30%, #000000 100%);
       display: block;
     }
     #webcam {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 90px;
-      height: 68px;
+      top: 10px;
+      right: 10px;
+      width: 75px;
+      height: 56px;
       border: 2px solid #ffcc00;
-      border-radius: 8px;
+      border-radius: 6px;
       transform: scaleX(-1);
       z-index: 10;
+      object-fit: cover;
     }
     #ui-layer {
       position: absolute;
-      top: 15px;
-      left: 15px;
-      font-size: 22px;
+      top: 12px;
+      left: 12px;
+      font-size: 18px;
       font-weight: bold;
       color: #ffcc00;
       text-shadow: 2px 2px 4px #000;
@@ -85,11 +95,11 @@ game_html = """
     }
     #restart-btn {
       position: absolute;
-      top: 380px;
+      top: 65%;
       left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 28px;
-      font-size: 18px;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      font-size: 16px;
       font-weight: bold;
       color: #000;
       background-color: #ffcc00;
@@ -99,11 +109,6 @@ game_html = """
       box-shadow: 0 0 20px rgba(255,204,0,0.6);
       display: none;
       z-index: 20;
-      transition: all 0.2s ease;
-    }
-    #restart-btn:hover {
-      background-color: #ffffff;
-      transform: translateX(-50%) scale(1.08);
     }
   </style>
 </head>
@@ -113,7 +118,7 @@ game_html = """
   
   <div id="game-container">
     <video id="webcam" autoplay playsinline muted></video>
-    <div id="ui-layer">BANANA SKOR: <span id="score">0</span></div>
+    <div id="ui-layer">SKOR: <span id="score">0</span></div>
     <button id="restart-btn" onclick="resetGame()">YENİDEN BAŞLAT</button>
     <canvas id="gameCanvas" width="400" height="600"></canvas>
   </div>
@@ -141,7 +146,7 @@ game_html = """
     let moveState = 'neutral'; 
 
     let obstacles = [];
-    const FIXED_OBSTACLE_SPEED = 0.0075; 
+    const FIXED_OBSTACLE_SPEED = 0.012; 
     let spawnTimer = 0;
 
     const obstacleTypes = [
@@ -157,7 +162,7 @@ game_html = """
     async function setupCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 320, height: 240 },
+          video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 } },
           audio: false
         });
         video.srcObject = stream;
@@ -168,7 +173,7 @@ game_html = """
           };
         });
       } catch (err) {
-        throw new Error("Kamera erişimi başarısız: " + err.message);
+        throw new Error("Kamera erişimi başarısız! İzin verdiğinizden emin olun.");
       }
     }
 
@@ -182,15 +187,15 @@ game_html = """
             const noseX = face.landmarks[2][0]; 
 
             if (moveState === 'neutral') {
-              if (noseX > 190) { 
+              if (noseX > 180) { 
                 if (playerLane > 0) playerLane--;
                 moveState = 'moved'; 
-              } else if (noseX < 130) { 
+              } else if (noseX < 120) { 
                 if (playerLane < 2) playerLane++;
                 moveState = 'moved'; 
               }
             } else if (moveState === 'moved') {
-              if (noseX >= 130 && noseX <= 190) {
+              if (noseX >= 120 && noseX <= 180) {
                 moveState = 'neutral'; 
               }
             }
@@ -410,13 +415,13 @@ game_html = """
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       ctx.fillStyle = '#ff0055';
-      ctx.font = 'bold 36px sans-serif';
+      ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('GAME OVER', 200, 260);
       
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '20px sans-serif';
-      ctx.fillText('Toplanan Banana Skoru: ' + score, 200, 310);
+      ctx.font = '18px sans-serif';
+      ctx.fillText('Toplanan Skor: ' + score, 200, 310);
 
       restartBtn.style.display = 'block';
     }
@@ -437,18 +442,12 @@ game_html = """
       updateGame();
     }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameOver) {
-        resetGame();
-      }
-    });
-
     async function main() {
       try {
-        statusText.innerText = "Kamera Başlatılıyor...";
+        statusText.innerText = "Kamera İzni İsteniyor...";
         await setupCamera();
         
-        statusText.innerText = "Yüz Modeli (BlazeFace) Yükleniyor...";
+        statusText.innerText = "AI Modeli Yükleniyor...";
         
         if (typeof blazeface === 'undefined') {
           throw new Error("BlazeFace kütüphanesi yüklenemedi!");
@@ -456,7 +455,7 @@ game_html = """
 
         model = await blazeface.load();
         
-        statusText.innerText = "Bello! Oyun Hazır. Kafanı Eğerek Minyonu Yönlendir.";
+        statusText.innerText = "Oyun Hazır! Kafanı Eğerek Yönlendir.";
         
         detectFace();
         updateGame();
@@ -473,5 +472,4 @@ game_html = """
 </html>
 """
 
-# HTML Bileşenini Yükle
-components.html(game_html, height=720)
+components.html(game_html, height=680)
