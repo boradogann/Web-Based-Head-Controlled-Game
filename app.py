@@ -2,14 +2,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Minion 3D Runner - Mobile Stabilized",
+    page_title="Minion 3D Runner",
     page_icon="🍌",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion 3D Runner: Mobil Stabilize Sürüm")
-st.caption("Telefon elde tutulurken oluşan el titremelerini süzebilen özel açı takibi altyapısı eklendi!")
+st.title("🍌 Minion 3D Runner")
+
 
 game_html = """
 <!DOCTYPE html>
