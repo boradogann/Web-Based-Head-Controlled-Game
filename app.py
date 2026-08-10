@@ -1,267 +1,92 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Streamlit Sayfa Yapılandırması
 st.set_page_config(
-    page_title="Minion 3D Runner - Word Collector",
+    page_title="Minion 3D Runner - Ultra Fast",
     page_icon="🍌",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-st.title("🍌 Minion 3D Runner: Kelime Avcısı")
-st.caption("Kafanızı sağa/sola eğip merkeze getirerek doğru harfleri toplayın, 500m bonuslarını kapın ve mağazadan kostümleri açın!")
+st.title("🍌 Minion 3D Runner: Ultra Seri Kontrol")
+st.caption("Kafa hareket algılama hızı ve hassasiyeti maksimuma çıkarıldı!")
 
-# HTML / CSS / JS Oyun Kodu
 game_html = """
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minion Runner - Optimized Streamlit Edition</title>
+  <title>Minion Runner - Fast Detection</title>
 
-  <!-- TensorFlow.js ve BlazeFace Kütüphaneleri -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-      touch-action: none;
-    }
+    * { box-sizing: border-box; touch-action: none; }
     body {
-      margin: 0;
-      padding: 0;
-      background: #0f141d;
-      color: #fff;
+      margin: 0; padding: 0; background: #0f141d; color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow: hidden;
-      width: 100vw;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      overflow: hidden; width: 100vw;
     }
     #status {
-      font-size: 14px;
-      margin: 6px 0;
-      color: #ffcc00;
-      font-weight: bold;
-      text-shadow: 0 0 10px rgba(255,204,0,0.3);
-      width: 90%;
-      text-align: center;
+      font-size: 14px; margin: 6px 0; color: #ffcc00; font-weight: bold;
+      text-shadow: 0 0 10px rgba(255,204,0,0.3); width: 90%; text-align: center;
     }
     #game-container {
-      position: relative;
-      width: 95vw;
-      max-width: 400px;
-      height: 75vh;
-      max-height: 600px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      border-radius: 16px;
-      overflow: hidden;
-      border: 2px solid #ffcc00;
+      position: relative; width: 95vw; max-width: 400px; height: 75vh; max-height: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8); border-radius: 16px; overflow: hidden; border: 2px solid #ffcc00;
     }
-    canvas {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom, #0f172a 0%, #1e293b 30%, #000000 100%);
-      display: block;
-    }
+    canvas { width: 100%; height: 100%; background: linear-gradient(to bottom, #0f172a 0%, #1e293b 30%, #000000 100%); display: block; }
     #webcam {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 70px;
-      height: 52px;
-      border: 2px solid #ffcc00;
-      border-radius: 6px;
-      transform: scaleX(-1);
-      z-index: 10;
-      object-fit: cover;
+      position: absolute; top: 10px; left: 10px; width: 70px; height: 52px;
+      border: 2px solid #ffcc00; border-radius: 6px; transform: scaleX(-1); z-index: 10; object-fit: cover;
     }
     #distance-ui {
-      position: absolute;
-      top: 10px;
-      left: 90px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid #38bdf8;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      color: #38bdf8;
-      z-index: 10;
+      position: absolute; top: 10px; left: 90px; background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #38bdf8; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #38bdf8; z-index: 10;
     }
     #wallet-ui {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(30, 58, 138, 0.85);
-      border: 2px solid #ffcc00;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 15px;
-      font-weight: bold;
-      color: #ffcc00;
-      box-shadow: 0 0 10px rgba(255,204,0,0.4);
-      z-index: 10;
+      position: absolute; top: 10px; right: 10px; background: rgba(30, 58, 138, 0.85);
+      border: 2px solid #ffcc00; padding: 6px 14px; border-radius: 20px; font-size: 15px; font-weight: bold; color: #ffcc00; z-index: 10;
     }
     #word-ui {
-      position: absolute;
-      top: 48px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 4px;
-      z-index: 10;
-      max-width: 380px;
-      flex-wrap: wrap;
-      justify-content: center;
+      position: absolute; top: 48px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 4px; z-index: 10; max-width: 380px; flex-wrap: wrap; justify-content: center;
     }
     .char-box {
-      width: 28px;
-      height: 34px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 2px solid #475569;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: bold;
-      color: #94a3b8;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
+      width: 28px; height: 34px; background: rgba(15, 23, 42, 0.9); border: 2px solid #475569;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: bold; color: #94a3b8; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;
     }
     .char-box.collected {
-      background: #ffcc00;
-      border-color: #ffffff;
-      color: #000000;
-      box-shadow: 0 0 10px #ffcc00;
-      transform: scale(1.1);
+      background: #ffcc00; border-color: #ffffff; color: #000000; box-shadow: 0 0 10px #ffcc00; transform: scale(1.1);
     }
-    
     .game-btn {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 28px;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      display: none;
-      z-index: 20;
-      transition: all 0.2s ease;
-      box-shadow: 0 0 15px rgba(255,204,0,0.5);
+      position: absolute; left: 50%; transform: translateX(-50%); padding: 12px 28px;
+      font-size: 16px; font-weight: bold; border: none; border-radius: 25px; cursor: pointer; display: none; z-index: 20;
     }
-    #restart-btn {
-      top: 58%;
-      color: #000;
-      background-color: #ffcc00;
-    }
-    #shop-btn {
-      top: 70%;
-      color: #fff;
-      background-color: #2563eb;
-      border: 2px solid #3b82f6;
-    }
+    #restart-btn { top: 58%; color: #000; background-color: #ffcc00; }
+    #shop-btn { top: 70%; color: #fff; background-color: #2563eb; border: 2px solid #3b82f6; }
 
     #shop-modal {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 20, 29, 0.95);
-      z-index: 30;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      padding: 15px;
-      overflow-y: auto;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 20, 29, 0.95); z-index: 30; display: none; flex-direction: column; align-items: center; padding: 15px; overflow-y: auto;
     }
-    #shop-header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #334155;
-      padding-bottom: 10px;
-    }
-    #back-btn {
-      background: #334155;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 15px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    #shop-title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #ffcc00;
-    }
-    .shop-items-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .shop-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #1e293b;
-      border: 2px solid #334155;
-      padding: 10px 15px;
-      border-radius: 12px;
-    }
-    .shop-item-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .shop-item-icon {
-      font-size: 30px;
-    }
-    .shop-item-details {
-      display: flex;
-      flex-direction: column;
-    }
-    .shop-item-name {
-      font-weight: bold;
-      font-size: 14px;
-      color: #fff;
-    }
-    .shop-item-price {
-      font-size: 12px;
-      color: #ffcc00;
-    }
-    .buy-btn {
-      padding: 8px 14px;
-      border-radius: 15px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      background: #10b981;
-      color: #fff;
-      font-size: 13px;
-    }
-    .buy-btn.selected {
-      background: #64748b;
-      cursor: default;
-    }
-    .buy-btn.disabled {
-      background: #475569;
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    #shop-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+    #back-btn { background: #334155; color: #fff; border: none; padding: 8px 16px; border-radius: 15px; font-weight: bold; cursor: pointer; }
+    #shop-title { font-size: 18px; font-weight: bold; color: #ffcc00; }
+    .shop-items-container { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+    .shop-item { display: flex; align-items: center; justify-content: space-between; background: #1e293b; border: 2px solid #334155; padding: 10px 15px; border-radius: 12px; }
+    .shop-item-info { display: flex; align-items: center; gap: 12px; }
+    .shop-item-icon { font-size: 30px; }
+    .shop-item-details { display: flex; flex-direction: column; }
+    .shop-item-name { font-weight: bold; font-size: 14px; color: #fff; }
+    .shop-item-price { font-size: 12px; color: #ffcc00; }
+    .buy-btn { padding: 8px 14px; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; background: #10b981; color: #fff; font-size: 13px; }
+    .buy-btn.selected { background: #64748b; cursor: default; }
+    .buy-btn.disabled { background: #475569; opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -285,7 +110,6 @@ game_html = """
         <div id="shop-title">MINYON MARKETİ</div>
         <div style="font-size:14px; color:#ffcc00;">🍌 <span id="shop-coins">0</span></div>
       </div>
-
       <div class="shop-items-container" id="shop-items"></div>
     </div>
 
@@ -312,6 +136,7 @@ game_html = """
     let nextDistanceMilestone = 500;
     let gameOver = false;
     let animationFrameId;
+    let isDetecting = false; // Asenkron kilit engelleme
     
     const baseLanes = [80, 200, 320];   
     const topLanes = [170, 200, 230];   
@@ -405,14 +230,8 @@ game_html = """
       });
     }
 
-    function openShop() {
-      renderShopUI();
-      shopModal.style.display = 'flex';
-    }
-
-    function closeShop() {
-      shopModal.style.display = 'none';
-    }
+    function openShop() { renderShopUI(); shopModal.style.display = 'flex'; }
+    function closeShop() { shopModal.style.display = 'none'; }
 
     function buySkin(skinId) {
       const skin = skins.find(s => s.id === skinId);
@@ -430,10 +249,11 @@ game_html = """
       renderShopUI();
     }
 
+    // 1. KAMERA DÜŞÜK ÇÖZÜNÜRLÜKLE BAŞLATILIR (Hızlı İşleme İçin 160x120)
     async function setupCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 320 }, height: { ideal: 240 } },
+          video: { facingMode: "user", width: { ideal: 160 }, height: { ideal: 120 } },
           audio: false
         });
         video.srcObject = stream;
@@ -444,38 +264,47 @@ game_html = """
           };
         });
       } catch (err) {
-        throw new Error("Kamera erişimi başarısız! İzin verdiğinizden emin olun.");
+        throw new Error("Kamera erişimi başarısız!");
       }
     }
 
-    async function detectFace() {
-      if (!gameOver && model) {
+    // 2. ULTRA HIZLI VE KİLİTSİZ YÜZ ALGILAMA DÖNGÜSÜ
+    async function runDetectionLoop() {
+      if (!gameOver && model && !isDetecting) {
+        isDetecting = true;
         try {
           const predictions = await model.estimateFaces(video, false);
 
           if (predictions.length > 0) {
             const face = predictions[0];
-            const noseX = face.landmarks[2][0]; 
+            const noseX = face.landmarks[2][0]; // Burun X koordinatı
 
+            // Hassel Eşikleri Daraltıldı (Daha hassas ve tepkisel)
+            // Kamera 160px genişliğinde olduğu için merkez: 80px civarıdır
             if (moveState === 'neutral') {
-              if (noseX > 180) { 
+              if (noseX > 90) { 
                 if (playerLane > 0) playerLane--;
                 moveState = 'moved'; 
-              } else if (noseX < 120) { 
+              } else if (noseX < 65) { 
                 if (playerLane < 2) playerLane++;
                 moveState = 'moved'; 
               }
             } else if (moveState === 'moved') {
-              if (noseX >= 120 && noseX <= 180) {
+              if (noseX >= 65 && noseX <= 90) {
                 moveState = 'neutral'; 
               }
             }
           }
         } catch (e) {
-          console.error("Yüz tespiti hatası:", e);
+          console.error("Hızlı Yüz Tespiti Hatası:", e);
         }
+        isDetecting = false;
       }
-      requestAnimationFrame(detectFace);
+      
+      // Saniyede ~60 kez yerine hemen sonraki mikro kareye geç
+      if (!gameOver) {
+        setTimeout(runDetectionLoop, 15); // ~60 FPS AI Çıkarım Döngüsü
+      }
     }
 
     function lerp(start, end, t) {
@@ -710,8 +539,9 @@ game_html = """
       draw3DRoad();
       updateAndDrawDecorations();
 
+      // 3. ŞERİT KAYMA HIZI HIZLANDIRILDI (0.25 -> 0.45)
       const targetX = baseLanes[playerLane];
-      playerX += (targetX - playerX) * 0.25; 
+      playerX += (targetX - playerX) * 0.45; 
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
@@ -905,6 +735,8 @@ game_html = """
       restartBtn.style.display = 'none';
       shopBtn.style.display = 'none';
       closeShop();
+      
+      runDetectionLoop();
       updateGame();
     }
 
@@ -930,7 +762,7 @@ game_html = """
         
         statusText.innerText = "Bello! Doğru Harfleri Topla.";
         
-        detectFace();
+        runDetectionLoop(); // Bağımsız hızlı döngü başlatılır
         updateGame();
       } catch (e) {
         statusText.style.color = "#ff0055";
@@ -945,5 +777,4 @@ game_html = """
 </html>
 """
 
-# Streamlit HTML Bileşenini Yükleme
 components.html(game_html, height=680)
